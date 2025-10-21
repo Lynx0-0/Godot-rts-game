@@ -1,95 +1,152 @@
 # scripts/ui/hud.gd
 extends CanvasLayer
 
-# Riferimenti UI
+## Interfaccia utente principale del gioco.
+## Mostra risorse del giocatore e informazioni sulle unità selezionate.
+
+# ===== COSTANTI =====
+
+## Posizione del pannello risorse
+const RESOURCE_PANEL_POS := Vector2(10, 10)
+## Posizione del pannello info unità
+const UNIT_INFO_PANEL_POS := Vector2(10, 500)
+## Dimensione del pannello info unità
+const UNIT_INFO_PANEL_SIZE := Vector2(300, 150)
+
+# ===== RIFERIMENTI UI - RISORSE =====
+
 @onready var food_amount = $ResourcePanel/HBoxContainer/FoodContainer/FoodAmount
 @onready var wood_amount = $ResourcePanel/HBoxContainer/WoodContainer/WoodAmount
 @onready var gold_amount = $ResourcePanel/HBoxContainer/GoldContainer/GoldAmount
+
+# ===== RIFERIMENTI UI - INFO UNITÀ =====
 
 @onready var unit_info_panel = $UnitInfoPanel
 @onready var unit_name_label = $UnitInfoPanel/VBoxContainer/UnitName
 @onready var health_bar = $UnitInfoPanel/VBoxContainer/HealthBar
 @onready var unit_stats = $UnitInfoPanel/VBoxContainer/UnitStats
 
+# ===== MAPPING RISORSE -> UI =====
+
+## Mappa tipo risorsa a label UI corrispondente (riduce codice ripetitivo)
+var resource_labels: Dictionary
+
+# ===== METODI LIFECYCLE =====
+
 func _ready():
 	print("HUD inizializzato")
-	
-	# Connetti segnali risorse (con controllo di sicurezza)
+
+	# Setup mapping risorse -> labels
+	_setup_resource_labels()
+
+	# Connetti segnali risorse con controllo di sicurezza
 	if ResourceManager:
 		ResourceManager.resource_changed.connect(_on_resource_changed)
-	
-	# Setup iniziale
+
+	# Setup posticipato per evitare errori di timing
 	call_deferred("_deferred_setup")
 
-func _deferred_setup():
-	"""Setup posticipato per evitare errori di timing"""
+# ===== METODI PRIVATI - SETUP =====
+
+## Setup mapping tra tipi di risorse e label UI
+func _setup_resource_labels() -> void:
+	resource_labels = {
+		ResourceManager.ResourceType.FOOD: food_amount,
+		ResourceManager.ResourceType.WOOD: wood_amount,
+		ResourceManager.ResourceType.GOLD: gold_amount
+	}
+
+## Setup posticipato per evitare errori di timing
+func _deferred_setup() -> void:
 	_update_all_resources()
 	if unit_info_panel:
 		unit_info_panel.visible = false
 	_setup_ui_positions()
 
-func _setup_ui_positions():
-	# Posiziona pannelli
-	$ResourcePanel.position = Vector2(10, 10)
-	unit_info_panel.position = Vector2(10, 500)
-	unit_info_panel.size = Vector2(300, 150)
+## Posiziona i pannelli UI nelle posizioni corrette
+func _setup_ui_positions() -> void:
+	$ResourcePanel.position = RESOURCE_PANEL_POS
+	unit_info_panel.position = UNIT_INFO_PANEL_POS
+	unit_info_panel.size = UNIT_INFO_PANEL_SIZE
 
-func _update_all_resources():
-	# Aggiorna display risorse
-	food_amount.text = str(ResourceManager.get_resource_amount(ResourceManager.ResourceType.FOOD))
-	wood_amount.text = str(ResourceManager.get_resource_amount(ResourceManager.ResourceType.WOOD))
-	gold_amount.text = str(ResourceManager.get_resource_amount(ResourceManager.ResourceType.GOLD))
+## Aggiorna tutti i display delle risorse
+func _update_all_resources() -> void:
+	for resource_type in resource_labels:
+		var amount = ResourceManager.get_resource_amount(resource_type)
+		resource_labels[resource_type].text = str(amount)
 
-func _on_resource_changed(type, amount):
-	# Aggiorna singola risorsa
-	match type:
-		ResourceManager.ResourceType.FOOD:
-			food_amount.text = str(amount)
-		ResourceManager.ResourceType.WOOD:
-			wood_amount.text = str(amount)
-		ResourceManager.ResourceType.GOLD:
-			gold_amount.text = str(amount)
+# ===== CALLBACK SEGNALI =====
 
-func show_unit_info(units: Array):
-	# Mostra info unità selezionate
+## Chiamato quando una risorsa cambia (ridotto codice ripetitivo con mapping)
+func _on_resource_changed(type: ResourceManager.ResourceType, amount: int) -> void:
+	if type in resource_labels:
+		resource_labels[type].text = str(amount)
+
+# ===== METODI PUBBLICI =====
+
+## Mostra le informazioni delle unità selezionate nel pannello.
+## [param units]: Array di unità selezionate
+func show_unit_info(units: Array) -> void:
+	# Nascondi pannello se nessuna unità selezionata
 	if units.size() == 0:
 		unit_info_panel.visible = false
 		return
-	
+
 	unit_info_panel.visible = true
-	var unit = units[0]
-	
-	# Info base
+	var unit = units[0]  # Mostra info della prima unità
+
+	# Aggiorna informazioni base
+	_update_basic_unit_info(unit)
+
+	# Aggiorna statistiche specifiche per tipo
+	var stats_text = _build_unit_stats_text(unit)
+	unit_stats.text = stats_text
+
+# ===== METODI PRIVATI - INFO UNITÀ =====
+
+## Aggiorna le informazioni base dell'unità (nome, vita)
+func _update_basic_unit_info(unit) -> void:
 	unit_name_label.text = unit.unit_type.capitalize()
 	health_bar.max_value = unit.max_health
 	health_bar.value = unit.current_health
-	
-	# Stats specifici
-	var stats_text = "Velocità: " + str(unit.speed) + "\n"
-	stats_text += "Vita: " + str(unit.current_health) + "/" + str(unit.max_health) + "\n"
-	
-	# Info worker
+
+## Costruisce il testo delle statistiche per l'unità
+func _build_unit_stats_text(unit) -> String:
+	var stats = []
+
+	# Statistiche comuni a tutte le unità
+	stats.append("Velocità: %d" % unit.speed)
+	stats.append("Vita: %d/%d" % [unit.current_health, unit.max_health])
+
+	# Statistiche specifiche per worker
 	if unit.unit_type == "worker":
-		stats_text += "\n--- WORKER ---\n"
-		stats_text += "Capacità: " + str(unit.carry_capacity) + "\n"
-		
-		# Inventario
-		var total = unit.food_carried + unit.wood_carried + unit.gold_carried
-		stats_text += "Trasporta: " + str(total) + "/" + str(unit.carry_capacity) + "\n"
-		
+		stats.append("")  # Linea vuota
+		stats.append("--- WORKER ---")
+		stats.append("Capacità: %d" % unit.carry_capacity)
+
+		# Informazioni inventario
+		var total_carried = unit.get_total_carried()
+		stats.append("Trasporta: %d/%d" % [total_carried, unit.carry_capacity])
+
+		# Dettaglio risorse trasportate
 		if unit.food_carried > 0:
-			stats_text += "Cibo: " + str(unit.food_carried) + "\n"
+			stats.append("  Cibo: %d" % unit.food_carried)
 		if unit.wood_carried > 0:
-			stats_text += "Legno: " + str(unit.wood_carried) + "\n"
+			stats.append("  Legno: %d" % unit.wood_carried)
 		if unit.gold_carried > 0:
-			stats_text += "Oro: " + str(unit.gold_carried) + "\n"
-		
-		# Stato
-		if unit.is_gathering:
-			stats_text += "Stato: Raccogliendo\n"
-		elif unit.is_returning:
-			stats_text += "Stato: Tornando\n"
-		else:
-			stats_text += "Stato: Inattivo\n"
-	
-	unit_stats.text = stats_text
+			stats.append("  Oro: %d" % unit.gold_carried)
+
+		# Stato corrente del worker
+		stats.append("")
+		stats.append("Stato: " + _get_worker_status(unit))
+
+	return "\n".join(stats)
+
+## Ottiene lo stato corrente del worker come stringa
+func _get_worker_status(worker) -> String:
+	if worker.is_gathering:
+		return "Raccogliendo"
+	elif worker.is_returning:
+		return "Tornando alla base"
+	else:
+		return "Inattivo"
