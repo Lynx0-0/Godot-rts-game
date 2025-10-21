@@ -1,0 +1,61 @@
+[gd_scene load_steps=5 format=3 uid="uid://bjja4hrcul18m"]
+
+[ext_resource type="Script" uid="uid://f4a5nqqodst0" path="res://scripts/worker.gd" id="1_4n0ys"]
+[ext_resource type="Texture2D" uid="uid://brjsorqeq34yh" path="res://icon.svg" id="2_sb737"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_02e1h"]
+radius = 29.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_s3c20"]
+radius = 44.0
+
+[node name="BaseUnit" type="CharacterBody2D"]
+motion_mode = 1
+wall_min_slide_angle = 0.0
+script = ExtResource("1_4n0ys")
+speed = null
+max_health = null
+unit_type = null
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_sb737")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_02e1h")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
+path_desired_distance = 4.0
+path_max_distance = 20.0
+avoidance_enabled = true
+radius = 16.0
+max_speed = 150.0
+
+[node name="SelectionArea" type="Area2D" parent="."]
+light_mask = 0
+visibility_layer = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SelectionArea"]
+shape = SubResource("CircleShape2D_s3c20")
+
+[node name="SelectionIndicator" type="ColorRect" parent="SelectionArea"]
+visible = false
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+color = Color(0.2275, 0.91, 0, 0.52549)
+
+[node name="ProgressBar" type="ProgressBar" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -3.0
+offset_right = 20.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+show_percentage = false

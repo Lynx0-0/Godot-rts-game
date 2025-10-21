@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://brmqa0gv2e2cu"]
+
+[ext_resource type="Script" uid="uid://d2t7su3e5ktb7" path="res://scripts/environment/resource_node.gd" id="1_gokpr"]
+[ext_resource type="Texture2D" uid="uid://b8v761hafwcv2" path="res://assets/MiniWorldSprites/Nature/Trees.png" id="2_gokpr"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_gokpr"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_87o3y"]
+
+[node name="resource_node" type="StaticBody2D"]
+script = ExtResource("1_gokpr")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_gokpr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_gokpr")
+
+[node name="InteractionArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+shape = SubResource("CircleShape2D_87o3y")
+
+[node name="ResourceAmount" type="Label" parent="."]
+offset_left = -20.0
+offset_top = -58.0
+offset_right = 20.0
+offset_bottom = -35.0
+horizontal_alignment = 1

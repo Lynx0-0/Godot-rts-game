@@ -1,0 +1,51 @@
+[gd_scene load_steps=9 format=3 uid="uid://deaq6jmpiaufn"]
+
+[ext_resource type="Script" uid="uid://b4mh5rs0jexyk" path="res://scripts/main.gd" id="1_jyhfs"]
+[ext_resource type="PackedScene" uid="uid://blioeonoi383j" path="res://scenes/game_camera.tscn" id="1_o5qli"]
+[ext_resource type="Texture2D" uid="uid://brjsorqeq34yh" path="res://icon.svg" id="2_0wfyh"]
+[ext_resource type="PackedScene" uid="uid://q1ju05byewtn" path="res://scenes/units/worker.tscn" id="3_sugp2"]
+[ext_resource type="PackedScene" uid="uid://bbktj3ub3ye7q" path="res://scenes/ui/hud.tscn" id="5_tbgi4"]
+[ext_resource type="PackedScene" uid="uid://brmqa0gv2e2cu" path="res://scenes/environment/resource_node.tscn" id="6_tefeu"]
+[ext_resource type="PackedScene" uid="uid://dhm1y51uelbkt" path="res://scenes/buildings/town_center.tscn" id="7_o6xl0"]
+
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_sugp2"]
+vertices = PackedVector2Array(1013.25, 18.4063, 1424.7, 196.922, 994.102, 380.641, -828.688, 389.102, -1064.16, 288.328, -1069.86, 69.8516, -682.438, -224.891, -56.5469, -401.453, 270.492, -271.242, -689.633, 793.773, -806.289, 593.789, -437.5, 946.641, 873.5, 511.469, 798.273, 684.68, 196.844, 985.398, -269.594, 1066.43, 790.328, -206.5)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2), PackedInt32Array(3, 4, 5, 6, 7, 8), PackedInt32Array(9, 10, 3, 8, 11), PackedInt32Array(12, 13, 14, 15, 11, 8, 16, 0), PackedInt32Array(12, 0, 2)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(-1080, 65, -687, -234, -56, -412, 273, -281, 795, -216, 1019, 10, 1450, 197, 1000, 389, 882, 517, 806, 692, 200, 995, -272, 1077, -443, 955, -697, 801, -816, 597, -838, 396, -1074, 295)])
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_jyhfs")
+
+[node name="game_camera" parent="." instance=ExtResource("1_o5qli")]
+
+[node name="Icon" type="Sprite2D" parent="."]
+position = Vector2(295, 111)
+texture = ExtResource("2_0wfyh")
+
+[node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
+position = Vector2(-59, -285)
+navigation_polygon = SubResource("NavigationPolygon_sugp2")
+
+[node name="BaseUnit" parent="." instance=ExtResource("3_sugp2")]
+position = Vector2(-11, -63)
+gather_rate = 15
+move_to_gather_range = 32.0
+speed = 150.0
+max_health = 100
+unit_type = "base"
+
+[node name="BaseUnit2" parent="." instance=ExtResource("3_sugp2")]
+position = Vector2(85, 143)
+gather_rate = 15
+move_to_gather_range = 32.0
+speed = 150.0
+max_health = 100
+unit_type = "base"
+
+[node name="HUD" parent="." instance=ExtResource("5_tbgi4")]
+
+[node name="resource_node" parent="." instance=ExtResource("6_tefeu")]
+position = Vector2(-89, 33)
+
+[node name="TownCenter" parent="." instance=ExtResource("7_o6xl0")]
+position = Vector2(-121, -91)

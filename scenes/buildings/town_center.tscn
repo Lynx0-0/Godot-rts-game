@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3 uid="uid://dhm1y51uelbkt"]
+
+[ext_resource type="Texture2D" uid="uid://bawaoy8eakkvf" path="res://assets/MiniWorldSprites/Buildings/Wood/Keep.png" id="1_1sx7f"]
+[ext_resource type="Script" uid="uid://vtdin7wxoi0j" path="res://scripts/buildings/town_center.gd" id="1_kb067"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_kb067"]
+
+[node name="TownCenter" type="StaticBody2D"]
+script = ExtResource("1_kb067")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("1_1sx7f")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_kb067")
+
+[node name="DepositArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DepositArea"]
+
+[node name="ProductionQueue" type="VBoxContainer" parent="."]
+offset_left = -20.0
+offset_top = -81.0
+offset_right = 20.0
+offset_bottom = -41.0

@@ -1,0 +1,41 @@
+[gd_scene load_steps=9 format=3 uid="uid://deaq6jmpiaufn"]
+
+[ext_resource type="Script" uid="uid://b4mh5rs0jexyk" path="res://scripts/main.gd" id="1_jyhfs"]
+[ext_resource type="PackedScene" uid="uid://blioeonoi383j" path="res://scenes/game_camera.tscn" id="1_o5qli"]
+[ext_resource type="Texture2D" uid="uid://brjsorqeq34yh" path="res://icon.svg" id="2_0wfyh"]
+[ext_resource type="PackedScene" uid="uid://q1ju05byewtn" path="res://scenes/units/worker.tscn" id="3_sugp2"]
+[ext_resource type="PackedScene" uid="uid://bbktj3ub3ye7q" path="res://scenes/ui/hud.tscn" id="5_tbgi4"]
+[ext_resource type="PackedScene" uid="uid://brmqa0gv2e2cu" path="res://scenes/environment/resource_node.tscn" id="6_tefeu"]
+[ext_resource type="PackedScene" uid="uid://dhm1y51uelbkt" path="res://scenes/buildings/town_center.tscn" id="7_o6xl0"]
+
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_sugp2"]
+vertices = PackedVector2Array(-1140.16, 1412.67, -1705.8, 1093.09, -1063.91, 298.422, -535.508, 1577.86, 1083.46, -718.078, 1830.64, 1443.63, 1700.72, 2144.78, 831.719, 2122.99, 591.867, -758.969, 248.977, 2169.72, -1069.86, 69.8516, -680.367, -226.477, 156.258, -728.063, 1813.03, -550.328, 2355.06, 594.281, 2178.34, 1022.77, -262.094, -652.719)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3), PackedInt32Array(4, 5, 6, 7, 8), PackedInt32Array(9, 3, 2, 10, 11, 12, 8, 7), PackedInt32Array(4, 13, 14, 15, 5), PackedInt32Array(12, 11, 16)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(-1080, 65, -687, -234, -267, -662, 155, -738, 592, -769, 1085, -728, 1820, -559, 2366, 594, 2187, 1028, 1840, 1448, 1709, 2155, 832, 2133, 246, 2180, -540, 1587, -1144, 1422, -1721, 1096, -1074, 295)])
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_jyhfs")
+
+[node name="game_camera" parent="." instance=ExtResource("1_o5qli")]
+
+[node name="Icon" type="Sprite2D" parent="."]
+position = Vector2(295, 111)
+texture = ExtResource("2_0wfyh")
+
+[node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
+position = Vector2(-431, -841)
+navigation_polygon = SubResource("NavigationPolygon_sugp2")
+
+[node name="BaseUnit" parent="." instance=ExtResource("3_sugp2")]
+position = Vector2(-11, -63)
+
+[node name="BaseUnit2" parent="." instance=ExtResource("3_sugp2")]
+position = Vector2(85, 143)
+
+[node name="HUD" parent="." instance=ExtResource("5_tbgi4")]
+
+[node name="resource_node" parent="." instance=ExtResource("6_tefeu")]
+position = Vector2(-89, 33)
+
+[node name="TownCenter" parent="." instance=ExtResource("7_o6xl0")]
+position = Vector2(-121, -91)

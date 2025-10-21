@@ -1,0 +1,67 @@
+[gd_scene load_steps=3 format=3 uid="uid://bbktj3ub3ye7q"]
+
+[ext_resource type="Script" uid="uid://cmin0y1wee6qa" path="res://scripts/ui/hud.gd" id="1_0mwgc"]
+[ext_resource type="Texture2D" uid="uid://brjsorqeq34yh" path="res://icon.svg" id="2_hqnrr"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_0mwgc")
+
+[node name="ResourcePanel" type="PanelContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ResourcePanel"]
+clip_contents = true
+layout_mode = 2
+
+[node name="FoodContainer" type="HBoxContainer" parent="ResourcePanel/HBoxContainer"]
+layout_mode = 2
+
+[node name="FoodIcon" type="TextureRect" parent="ResourcePanel/HBoxContainer/FoodContainer"]
+layout_mode = 2
+texture = ExtResource("2_hqnrr")
+
+[node name="FoodAmount" type="Label" parent="ResourcePanel/HBoxContainer/FoodContainer"]
+layout_mode = 2
+text = "cibo"
+
+[node name="WoodContainer" type="HBoxContainer" parent="ResourcePanel/HBoxContainer"]
+layout_mode = 2
+
+[node name="WoodIcon" type="TextureRect" parent="ResourcePanel/HBoxContainer/WoodContainer"]
+layout_mode = 2
+texture = ExtResource("2_hqnrr")
+
+[node name="WoodAmount" type="Label" parent="ResourcePanel/HBoxContainer/WoodContainer"]
+layout_mode = 2
+text = "legno"
+
+[node name="GoldContainer" type="HBoxContainer" parent="ResourcePanel/HBoxContainer"]
+layout_mode = 2
+
+[node name="GoldIcon" type="TextureRect" parent="ResourcePanel/HBoxContainer/GoldContainer"]
+layout_mode = 2
+texture = ExtResource("2_hqnrr")
+
+[node name="GoldAmount" type="Label" parent="ResourcePanel/HBoxContainer/GoldContainer"]
+layout_mode = 2
+text = "gold"
+
+[node name="UnitInfoPanel" type="PanelContainer" parent="."]
+offset_top = 137.0
+offset_right = 41.0
+offset_bottom = 218.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UnitInfoPanel"]
+layout_mode = 2
+
+[node name="UnitName" type="Label" parent="UnitInfoPanel/VBoxContainer"]
+layout_mode = 2
+text = "unita"
+
+[node name="HealthBar" type="ProgressBar" parent="UnitInfoPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="UnitStats" type="Label" parent="UnitInfoPanel/VBoxContainer"]
+layout_mode = 2
+text = "test"

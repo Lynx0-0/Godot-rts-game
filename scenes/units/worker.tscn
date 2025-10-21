@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://q1ju05byewtn"]
+
+[ext_resource type="PackedScene" uid="uid://b3sjyjdbykpc8" path="res://scenes/units/base_unit.tscn" id="1_7vgg6"]
+[ext_resource type="Script" uid="uid://c037mijabjh5v" path="res://scripts/units/worker.gd" id="2_qaivg"]
+
+[node name="BaseUnit" instance=ExtResource("1_7vgg6")]
+script = ExtResource("2_qaivg")
+gather_rate = 10
+carry_capacity = 50
+
+[node name="SelectionArea" parent="." index="3"]
+collision_layer = 2
+collision_mask = 0
