@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://cjk2s8m9n3qwe"]
+[gd_scene load_steps=4 format=3 uid="uid://cjk2s8nan3qwe"]
 
 [ext_resource type="PackedScene" uid="uid://b3sjyjdbykpc8" path="res://scenes/units/base_unit.tscn" id="1_soldier_base"]
 [ext_resource type="Script" path="res://scripts/units/soldier.gd" id="2_soldier_script"]

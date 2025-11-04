@@ -7,7 +7,7 @@ extends Node
 # ===== COSTANTI =====
 
 ## Dimensione cella griglia (pixel)
-const GRID_SIZE := 64
+const GRID_SIZE := 32
 ## Colore preview valido (verde trasparente)
 const VALID_COLOR := Color(0, 1, 0, 0.5)
 ## Colore preview invalido (rosso trasparente)

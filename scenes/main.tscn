@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://deaq6jmpiaufn"]
+[gd_scene load_steps=11 format=3 uid="uid://deaq6jmpiaufn"]
 
 [ext_resource type="Script" uid="uid://b4mh5rs0jexyk" path="res://scripts/main.gd" id="1_jyhfs"]
 [ext_resource type="PackedScene" uid="uid://blioeonoi383j" path="res://scenes/game_camera.tscn" id="1_o5qli"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://brmqa0gv2e2cu" path="res://scenes/environment/resource_node.tscn" id="6_tefeu"]
 [ext_resource type="PackedScene" uid="uid://dhm1y51uelbkt" path="res://scenes/buildings/town_center.tscn" id="7_o6xl0"]
 [ext_resource type="PackedScene" uid="uid://ctlqy524kqh7n" path="res://scenes/maps/game_map.tscn" id="8_tipki"]
+[ext_resource type="PackedScene" path="res://scenes/units/soldier.tscn" id="9_85g3d"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_sugp2"]
 vertices = PackedVector2Array(156.25781, -728.0625, 591.8672, -758.96875, 1083.4609, -718.0781, 1813.0313, -550.3281, 2355.0625, 594.28125, 2178.3438, 1022.77344, 1830.6406, 1443.6328, 831.71875, 2122.9922, 245.77344, 2169.9766, -1135.9375, 1415.0703, -1705.7969, 1093.0938, -1063.9063, 298.42188, -262.09375, -652.71875, 1700.7188, 2144.7813, -865.9922, 2124.2813, -680.3672, -226.47656, -1069.8594, 69.85156)
@@ -19,6 +20,9 @@ script = ExtResource("1_jyhfs")
 
 [node name="game_camera" parent="." instance=ExtResource("1_o5qli")]
 
+[node name="TileMap" parent="." instance=ExtResource("8_tipki")]
+visible = false
+
 [node name="Icon" type="Sprite2D" parent="."]
 position = Vector2(295, 111)
 texture = ExtResource("2_0wfyh")
@@ -26,8 +30,6 @@ texture = ExtResource("2_0wfyh")
 [node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
 position = Vector2(-645, -719)
 navigation_polygon = SubResource("NavigationPolygon_sugp2")
-
-[node name="TileMap" parent="." instance=ExtResource("8_tipki")]
 
 [node name="BaseUnit" parent="." instance=ExtResource("3_sugp2")]
 position = Vector2(-11, -63)
@@ -42,3 +44,10 @@ position = Vector2(-89, 33)
 
 [node name="TownCenter" parent="." instance=ExtResource("7_o6xl0")]
 position = Vector2(-121, -91)
+
+[node name="Soldier" parent="." instance=ExtResource("9_85g3d")]
+position = Vector2(-245, 465)
+
+[node name="Soldier2" parent="." instance=ExtResource("9_85g3d")]
+position = Vector2(29, 470)
+team = "ia"
