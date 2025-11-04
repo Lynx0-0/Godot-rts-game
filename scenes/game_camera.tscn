@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://blioeonoi383j"]
 
-[ext_resource type="Script" uid="uid://bthbiheqknggd" path="res://scripts/game_camera.gd" id="1_1qhs2"]
+[ext_resource type="Script" path="res://scripts/camera/enhanced_camera.gd" id="1_enhanced"]
 
 [node name="game_camera" type="Camera2D"]
 limit_left = -1000
@@ -8,4 +8,8 @@ limit_top = -1000
 limit_right = 3000
 limit_bottom = 3000
 position_smoothing_enabled = true
-script = ExtResource("1_1qhs2")
+script = ExtResource("1_enhanced")
+enable_depth_effects = true
+vignette_intensity = 0.4
+blur_intensity = 2.0
+center_brightness_boost = 0.3

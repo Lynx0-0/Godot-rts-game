@@ -27,6 +27,7 @@ func _ready():
 	# Registra l'edificio nei gruppi per facilitare la ricerca
 	add_to_group("town_centers")
 	add_to_group("player_buildings")
+	add_to_group("buildings")  # Per DepthManager (z-ordering)
 
 	# Applica colore distintivo per riconoscimento visivo
 	sprite.modulate = BUILDING_COLOR
