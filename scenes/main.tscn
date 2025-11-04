@@ -27,6 +27,8 @@ texture = ExtResource("2_0wfyh")
 position = Vector2(-645, -719)
 navigation_polygon = SubResource("NavigationPolygon_sugp2")
 
+[node name="TileMap" parent="." instance=ExtResource("8_tipki")]
+
 [node name="BaseUnit" parent="." instance=ExtResource("3_sugp2")]
 position = Vector2(-11, -63)
 
@@ -40,5 +42,3 @@ position = Vector2(-89, 33)
 
 [node name="TownCenter" parent="." instance=ExtResource("7_o6xl0")]
 position = Vector2(-121, -91)
-
-[node name="TileMap" parent="." instance=ExtResource("8_tipki")]
