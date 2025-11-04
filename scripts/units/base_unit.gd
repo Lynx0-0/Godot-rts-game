@@ -17,11 +17,19 @@ const DEFAULT_UNIT_TYPE := "base"
 ## Dimensione predefinita indicatore selezione
 const SELECTION_INDICATOR_SIZE := Vector2(40, 40)
 ## Colore indicatore selezione
-const SELECTION_COLOR := Color(0, 1, 0, 0.3)  # Verde trasparente
+const SELECTION_COLOR := Color(0, 1, 0, 0.5)  # Verde trasparente
+## Colore bordo selezione
+const SELECTION_BORDER_COLOR := Color(0, 1, 0, 1.0)  # Verde pieno
+## Spessore bordo selezione
+const SELECTION_BORDER_WIDTH := 3.0
 ## Moltiplicatore luminosità quando selezionato
 const SELECTION_BRIGHTNESS := Color(1.2, 1.2, 1.2)
 ## Moltiplicatore luminosità per hover
 const HOVER_BRIGHTNESS := Color(1.1, 1.1, 1.1)
+## Raggio cerchio selezione
+const SELECTION_CIRCLE_RADIUS := 25.0
+## Durata animazione pulsazione (secondi)
+const SELECTION_PULSE_DURATION := 1.0
 ## Durata flash danno (secondi)
 const DAMAGE_FLASH_DURATION := 0.1
 ## Durata animazione morte (secondi)
@@ -48,6 +56,10 @@ var is_moving := false
 var target_position := Vector2.ZERO
 ## Componente per movimento fluido
 var movement_component: SmoothMovementComponent
+## Tween per animazione selezione
+var selection_tween: Tween
+## Scala corrente animazione pulsazione
+var pulse_scale := 1.0
 
 # ===== RIFERIMENTI NODI =====
 
@@ -98,6 +110,40 @@ func _ready():
 
 	print("BaseUnit '%s' (tipo: %s) inizializzato" % [name, unit_type])
 
+func _draw():
+	# Disegna cerchio di selezione se selezionato
+	if is_selected:
+		# Cerchio pulsante
+		var radius = SELECTION_CIRCLE_RADIUS * pulse_scale
+		# Cerchio riempito
+		draw_circle(Vector2.ZERO, radius, SELECTION_COLOR)
+		# Bordo cerchio
+		draw_arc(Vector2.ZERO, radius, 0, TAU, 32, SELECTION_BORDER_COLOR, SELECTION_BORDER_WIDTH)
+
+		# Freccia direzione movimento (se in movimento)
+		if is_moving and movement_component:
+			var direction = movement_component.facing_direction
+			if direction.length() > 0.1:
+				_draw_direction_arrow(direction, radius + 5)
+
+func _draw_direction_arrow(direction: Vector2, offset: float):
+	"""Disegna freccia che indica direzione movimento"""
+	var arrow_length = 15.0
+	var arrow_width = 8.0
+
+	# Punto base della freccia
+	var base = direction.normalized() * offset
+	# Punta della freccia
+	var tip = base + direction.normalized() * arrow_length
+
+	# Triangolo freccia
+	var left = tip - direction.rotated(PI * 0.75).normalized() * arrow_width
+	var right = tip - direction.rotated(-PI * 0.75).normalized() * arrow_width
+
+	# Disegna triangolo
+	var points = PackedVector2Array([tip, left, right])
+	draw_colored_polygon(points, Color.WHITE)
+
 func _physics_process(delta):
 	if not navigation_agent:
 		return
@@ -111,6 +157,10 @@ func _physics_process(delta):
 		if is_moving and sprite:
 			var angle = movement_component.get_facing_angle()
 			sprite.rotation = angle + PI/2
+
+		# Ridisegna se selezionato e in movimento (per aggiornare freccia)
+		if is_selected and is_moving:
+			queue_redraw()
 	else:
 		# Fallback: movimento tradizionale (se componente non disponibile)
 		if navigation_agent.is_navigation_finished():
@@ -148,9 +198,22 @@ func set_selected(selected: bool) -> void:
 	if selection_indicator:
 		selection_indicator.visible = selected
 
-	# Cambia luminosità sprite
+	# Cambia luminosità sprite con animazione
 	if sprite:
-		sprite.modulate = SELECTION_BRIGHTNESS if selected else Color.WHITE
+		var target_color = SELECTION_BRIGHTNESS if selected else Color.WHITE
+		if selection_tween:
+			selection_tween.kill()
+		selection_tween = create_tween()
+		selection_tween.tween_property(sprite, "modulate", target_color, 0.2)
+
+	# Avvia/ferma animazione pulsazione
+	if selected:
+		_start_pulse_animation()
+	else:
+		_stop_pulse_animation()
+
+	# Forza ridisegno
+	queue_redraw()
 
 ## Applica danno all'unità.
 ## [param damage]: Quantità di danno da applicare
@@ -168,6 +231,27 @@ func take_damage(damage: int) -> void:
 		_die()
 
 # ===== METODI PRIVATI =====
+
+## Avvia animazione pulsazione cerchio selezione
+func _start_pulse_animation() -> void:
+	if selection_tween:
+		selection_tween.kill()
+
+	selection_tween = create_tween()
+	selection_tween.set_loops()  # Loop infinito
+	# Pulsa da 1.0 a 1.15 e ritorno
+	selection_tween.tween_property(self, "pulse_scale", 1.15, SELECTION_PULSE_DURATION / 2.0)
+	selection_tween.tween_property(self, "pulse_scale", 1.0, SELECTION_PULSE_DURATION / 2.0)
+
+	# Forza ridisegno continuo durante pulsazione
+	selection_tween.step_finished.connect(func(_idx): queue_redraw())
+
+## Ferma animazione pulsazione
+func _stop_pulse_animation() -> void:
+	if selection_tween:
+		selection_tween.kill()
+	pulse_scale = 1.0
+	queue_redraw()
 
 ## Setup del componente movimento fluido
 func _setup_smooth_movement() -> void:

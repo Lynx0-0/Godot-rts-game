@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 ResourceManager="*res://scripts/autoloads/resource_manager.gd"
 DepthManager="*res://scripts/systems/isometric_depth_manager.gd"
+BuildingPlacement="*res://scripts/systems/building_placement_system.gd"
 
 [input]
 
