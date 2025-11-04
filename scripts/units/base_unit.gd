@@ -46,6 +46,8 @@ var is_selected := false
 var is_moving := false
 ## Posizione target per il movimento
 var target_position := Vector2.ZERO
+## Componente per movimento fluido
+var movement_component: SmoothMovementComponent
 
 # ===== RIFERIMENTI NODI =====
 
@@ -91,23 +93,37 @@ func _ready():
 	# Setup indicatore di selezione visivo
 	_setup_selection_indicator()
 
+	# Setup movimento fluido
+	_setup_smooth_movement()
+
 	print("BaseUnit '%s' (tipo: %s) inizializzato" % [name, unit_type])
 
 func _physics_process(delta):
 	if not navigation_agent:
 		return
 
-	if navigation_agent.is_navigation_finished():
-		is_moving = false
-		return
+	# Usa componente movimento fluido se disponibile
+	if movement_component:
+		movement_component.physics_update(delta)
+		is_moving = movement_component.is_moving()
 
-	# Calcola direzione verso il prossimo punto del percorso
-	var next_position = navigation_agent.get_next_path_position()
-	var direction = global_position.direction_to(next_position)
+		# Ruota sprite verso direzione movimento (smooth)
+		if is_moving and sprite:
+			var angle = movement_component.get_facing_angle()
+			sprite.rotation = angle + PI/2
+	else:
+		# Fallback: movimento tradizionale (se componente non disponibile)
+		if navigation_agent.is_navigation_finished():
+			is_moving = false
+			return
 
-	# Imposta velocità desiderata per il navigation agent
-	var desired_velocity = direction * speed
-	navigation_agent.velocity = desired_velocity
+		# Calcola direzione verso il prossimo punto del percorso
+		var next_position = navigation_agent.get_next_path_position()
+		var direction = global_position.direction_to(next_position)
+
+		# Imposta velocità desiderata per il navigation agent
+		var desired_velocity = direction * speed
+		navigation_agent.velocity = desired_velocity
 
 # ===== METODI PUBBLICI =====
 
@@ -152,6 +168,24 @@ func take_damage(damage: int) -> void:
 		_die()
 
 # ===== METODI PRIVATI =====
+
+## Setup del componente movimento fluido
+func _setup_smooth_movement() -> void:
+	if not navigation_agent:
+		push_warning("NavigationAgent non trovato, movimento fluido non disponibile")
+		return
+
+	# Crea e configura componente movimento fluido
+	movement_component = SmoothMovementComponent.new()
+	movement_component.name = "SmoothMovement"
+	movement_component.max_speed = speed
+	movement_component.acceleration = 500.0
+	movement_component.deceleration = 700.0
+	movement_component.path_smoothing = 0.3
+	movement_component.rotation_speed = 10.0
+	add_child(movement_component)
+
+	print("Movimento fluido attivato per unità %s" % name)
 
 ## Setup sicuro dell'indicatore di selezione
 func _setup_selection_indicator() -> void:
@@ -203,6 +237,11 @@ func _die() -> void:
 
 ## Chiamato quando la velocità è stata calcolata dal NavigationAgent
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
+	# Se usiamo movimento fluido, il componente gestisce tutto
+	if movement_component:
+		return
+
+	# Fallback: movimento tradizionale
 	# Applica velocità calcolata
 	velocity = safe_velocity
 	move_and_slide()

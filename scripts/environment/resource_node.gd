@@ -40,6 +40,7 @@ const RESOURCE_COLORS := {
 func _ready():
 	# Registra il nodo nel gruppo per facilitare la ricerca
 	add_to_group("resource_nodes")
+	add_to_group("resources")  # Per DepthManager (z-ordering)
 
 	# Setup visivo iniziale
 	_update_display()
