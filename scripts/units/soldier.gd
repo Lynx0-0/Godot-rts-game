@@ -31,6 +31,23 @@ const MORALE_CITY_BONUS := 20.0
 ## Raggio bonus città (pixel)
 const CITY_BONUS_RADIUS := 150.0
 
+# ===== COSTANTI SISTEMA XP/MAESTRIA =====
+
+## XP per livello (progressivo)
+const XP_PER_LEVEL_BASE := 100
+## Moltiplicatore XP per livello successivo
+const XP_LEVEL_MULTIPLIER := 1.5
+## Livello massimo
+const MAX_LEVEL := 20
+## Bonus damage per livello (%)
+const DAMAGE_BONUS_PER_LEVEL := 5  # +5% danno per livello
+## Bonus HP per livello
+const HP_BONUS_PER_LEVEL := 10
+## Maestria bonus per livello (riduzione danno ricevuto %)
+const MASTERY_REDUCTION_PER_LEVEL := 2  # -2% danno ricevuto per livello
+## Range variazione danno (%)
+const DAMAGE_VARIANCE := 0.20  # ±20% danno
+
 # ===== VARIABILI ESPORTATE =====
 
 @export var attack_damage := DEFAULT_ATTACK_DAMAGE
@@ -62,7 +79,25 @@ var nearby_enemies := 0
 var ally_deaths_witnessed := 0
 var near_city := false
 
+# ===== SISTEMA XP/MAESTRIA =====
+
+var current_level := 1
+var current_xp := 0
+var xp_to_next_level := XP_PER_LEVEL_BASE
+var total_kills := 0
+var total_damage_dealt := 0
+var total_damage_received := 0
+var battles_survived := 0
+var mastery_bonus := 0.0  # Bonus accumulato da esperienza
+
+# Controllo movimenti durante combattimento
+var forced_movement_target := Vector2.ZERO
+var has_manual_order := false
+
 # ===== SEGNALI =====
+
+signal level_up(new_level: int)
+signal xp_gained(amount: int)
 
 signal stamina_changed(new_stamina: float)
 signal morale_changed(new_morale: float)
@@ -91,11 +126,15 @@ func _ready():
 	# Connetti segnali per UI
 	stamina_changed.connect(_on_stamina_changed)
 	morale_changed.connect(_on_morale_changed)
+	level_up.connect(_on_level_up)
+
+	# Applica bonus iniziale livello (se caricato da save)
+	_apply_level_bonuses()
 
 	# Setup UI iniziale
 	_update_ui()
 
-	print("Soldier '%s' (team: %s) pronto al combattimento" % [name, team])
+	print("Soldier '%s' Lv.%d (team: %s) pronto al combattimento" % [name, current_level, team])
 
 func _physics_process(delta):
 	super._physics_process(delta)  # Movimento base
@@ -124,14 +163,28 @@ func _process(delta):
 
 func _update_combat(delta: float):
 	"""Aggiorna logica combattimento"""
+	# NUOVO: Permetti override ordini manuali anche durante combattimento
+	if has_manual_order:
+		# Se ha ordine manuale, muoviti verso quella posizione
+		if navigation_agent and forced_movement_target != Vector2.ZERO:
+			navigation_agent.target_position = forced_movement_target
+
+			# Se arriva vicino al target manuale, resetta
+			if global_position.distance_to(forced_movement_target) < 20.0:
+				has_manual_order = false
+				forced_movement_target = Vector2.ZERO
+
+		# Non attaccare mentre esegui ordine manuale
+		return
+
 	# Se ha target valido
 	if current_target and is_instance_valid(current_target):
 		var distance = global_position.distance_to(current_target.global_position)
 
 		# Se nel raggio di attacco
 		if distance <= attack_range:
-			# Ferma movimento
-			if navigation_agent:
+			# Ferma movimento SOLO se non ha ordine manuale
+			if navigation_agent and not has_manual_order:
 				navigation_agent.target_position = global_position
 
 			# Attacca se può
@@ -147,32 +200,57 @@ func _update_combat(delta: float):
 			combat_time += delta
 
 		else:
-			# Insegui target se fuori range
-			if navigation_agent:
+			# Insegui target se fuori range (solo se no ordini manuali)
+			if navigation_agent and not has_manual_order:
 				navigation_agent.target_position = current_target.global_position
 	else:
 		# Nessun target, esci da combattimento
 		if is_in_combat:
 			is_in_combat = false
+			battles_survived += 1  # NUOVO: Conta battaglie sopravvissute
 			exited_combat.emit()
 		combat_time = 0.0
+
+		# Cerca automaticamente nuovi nemici (solo se no ordini manuali)
+		if not has_manual_order:
+			_find_nearest_enemy()
 
 func _perform_attack():
 	"""Esegue un attacco sul target corrente"""
 	if not current_target or not is_instance_valid(current_target):
 		return
 
-	# Calcola danno effettivo (ridotto se affaticato o morale basso)
-	var damage = attack_damage
+	# ===== CALCOLO DANNO CON MAESTRIA E CASUALITÀ =====
+
+	# Danno base
+	var base_damage = attack_damage
+
+	# 1. Bonus livello (+5% per livello)
+	var level_multiplier = 1.0 + (current_level - 1) * (DAMAGE_BONUS_PER_LEVEL / 100.0)
+
+	# 2. Maestria bonus (esperienza accumulated)
+	var mastery_multiplier = 1.0 + mastery_bonus
+
+	# 3. Fatigue penalty
 	var fatigue_multiplier = 1.0 if not is_fatigued else 0.7
+
+	# 4. Morale multiplier
 	var morale_multiplier = morale / 100.0
 
-	damage = int(damage * fatigue_multiplier * morale_multiplier)
+	# 5. CASUALITÀ: ±20% danno (evita morti simultanee)
+	var random_variance = randf_range(1.0 - DAMAGE_VARIANCE, 1.0 + DAMAGE_VARIANCE)
+
+	# Danno finale
+	var damage = base_damage * level_multiplier * mastery_multiplier * fatigue_multiplier * morale_multiplier * random_variance
+	damage = int(damage)
+
+	# Registra danno inflitto per XP
+	total_damage_dealt += damage
 
 	# Applica danno
 	if current_target.has_method("take_damage"):
 		current_target.take_damage(damage)
-		print("%s attacca %s per %d danni" % [name, current_target.name, damage])
+		print("%s (Lv.%d) attacca %s per %d danni [Maestria: %.1f%%]" % [name, current_level, current_target.name, damage, mastery_bonus * 100])
 
 	# Consuma stamina
 	current_stamina -= STAMINA_ATTACK_COST
@@ -187,6 +265,16 @@ func _perform_attack():
 
 	# Controlla se target è morto
 	if current_target.current_health <= 0:
+		# GUADAGNA XP PER KILL
+		var xp_reward = 50  # XP base per kill
+		# Bonus XP se uccidi nemico più forte
+		if current_target is Soldier:
+			xp_reward += (current_target.current_level - current_level) * 20
+			xp_reward = max(xp_reward, 25)  # Minimo 25 XP
+
+		_gain_xp(xp_reward)
+		total_kills += 1
+
 		target_killed.emit(current_target)
 		current_target = null
 
@@ -401,7 +489,75 @@ func witness_ally_death():
 	morale_changed.emit(morale)
 	print("%s ha visto morire un alleato! Morale ridotto" % name)
 
+# ===== SISTEMA XP/MAESTRIA =====
+
+func _gain_xp(amount: int):
+	"""Guadagna XP e controlla level up"""
+	current_xp += amount
+	xp_gained.emit(amount)
+
+	print("%s guadagna %d XP [%d/%d]" % [name, amount, current_xp, xp_to_next_level])
+
+	# Controlla level up
+	while current_xp >= xp_to_next_level and current_level < MAX_LEVEL:
+		_level_up()
+
+func _level_up():
+	"""Aumenta livello e applica bonus"""
+	current_level += 1
+	current_xp -= xp_to_next_level
+
+	# Calcola XP per prossimo livello (progressivo)
+	xp_to_next_level = int(XP_PER_LEVEL_BASE * pow(XP_LEVEL_MULTIPLIER, current_level - 1))
+
+	# Applica bonus livello
+	_apply_level_bonuses()
+
+	# Incrementa maestria (esperienza accumulata)
+	mastery_bonus += 0.03  # +3% maestria per livello
+
+	level_up.emit(current_level)
+	print("🎉 %s è salito al LIVELLO %d! [Maestria: +%.1f%%]" % [name, current_level, mastery_bonus * 100])
+
+func _apply_level_bonuses():
+	"""Applica bonus statistiche basati su livello"""
+	# HP bonus (+10 HP per livello)
+	max_health = DEFAULT_MAX_HEALTH + (current_level - 1) * HP_BONUS_PER_LEVEL
+	current_health = min(current_health + HP_BONUS_PER_LEVEL, max_health)  # Cura al level up
+
+	# Stamina bonus (+5 stamina per livello)
+	max_stamina = DEFAULT_MAX_STAMINA + (current_level - 1) * 5
+	current_stamina = min(current_stamina + 5, max_stamina)
+
+	# Damage bonus è applicato in _perform_attack()
+
+func get_damage_reduction() -> float:
+	"""Calcola riduzione danno ricevuto basata su maestria/livello"""
+	# -2% danno ricevuto per livello (max 40% al livello 20)
+	var level_reduction = (current_level - 1) * (MASTERY_REDUCTION_PER_LEVEL / 100.0)
+	# Maestria aggiuntiva
+	var mastery_reduction = mastery_bonus * 0.5  # Maestria riduce anche danno ricevuto
+	return min(level_reduction + mastery_reduction, 0.5)  # Max 50% riduzione
+
 # ===== OVERRIDE METODI BASE =====
+
+func take_damage(damage: int) -> void:
+	"""Override take_damage per considerare maestria"""
+	# Calcola riduzione danno da maestria
+	var reduction = get_damage_reduction()
+	var reduced_damage = int(damage * (1.0 - reduction))
+
+	# Registra danno ricevuto
+	total_damage_received += reduced_damage
+
+	# Guadagna piccola quantità XP anche ricevendo danno (impara dalla battaglia)
+	if reduced_damage > 0:
+		_gain_xp(int(reduced_damage * 0.2))  # 20% del danno ricevuto come XP
+
+	print("%s riceve %d danni (ridotto da %d) [Riduzione: %.1f%%]" % [name, reduced_damage, damage, reduction * 100])
+
+	# Applica danno base
+	super.take_damage(reduced_damage)
 
 func _die():
 	"""Override metodo morte per notificare alleati vicini"""
@@ -432,12 +588,26 @@ func get_morale_percentage() -> float:
 func force_attack(target: BaseUnit):
 	"""Forza attacco su target specifico"""
 	current_target = target
+	has_manual_order = false  # Reset ordini manuali
 
 func stop_combat():
 	"""Ferma combattimento"""
 	current_target = null
 	is_in_combat = false
+	has_manual_order = false
 	exited_combat.emit()
+
+## OVERRIDE: Permetti movimento anche durante combattimento
+func move_to_position(pos: Vector2) -> void:
+	"""Override per permettere ordini anche durante combattimento"""
+	# Imposta flag ordine manuale
+	has_manual_order = true
+	forced_movement_target = pos
+
+	# Chiama movimento base
+	super.move_to_position(pos)
+
+	print("%s riceve ordine manuale di muoversi a %v (anche se in combattimento)" % [name, pos])
 
 # ===== UI UPDATE =====
 
@@ -447,6 +617,17 @@ func _on_stamina_changed(new_stamina: float):
 
 func _on_morale_changed(new_morale: float):
 	"""Callback quando morale cambia"""
+	_update_ui()
+
+func _on_level_up(new_level: int):
+	"""Callback quando sale di livello"""
+	# Effetto visivo level up
+	if sprite:
+		var tween = create_tween()
+		tween.tween_property(sprite, "scale", Vector2(1.5, 1.5), 0.2)
+		tween.tween_property(sprite, "scale", Vector2.ONE, 0.2)
+
+	# Aggiorna UI
 	_update_ui()
 
 func _update_ui():
@@ -461,7 +642,8 @@ func _update_ui():
 			stamina_bar.modulate = Color.GREEN
 
 	if morale_indicator:
-		morale_indicator.text = "%d%%" % int(morale)
+		# Mostra livello e morale
+		morale_indicator.text = "Lv.%d (%d%%)" % [current_level, int(morale)]
 		# Cambia colore in base a morale
 		if morale > 80:
 			morale_indicator.modulate = Color.GREEN
