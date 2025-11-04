@@ -26,6 +26,10 @@ const UNIT_INFO_PANEL_SIZE := Vector2(300, 150)
 @onready var health_bar = $UnitInfoPanel/VBoxContainer/HealthBar
 @onready var unit_stats = $UnitInfoPanel/VBoxContainer/UnitStats
 
+# ===== RIFERIMENTI UI - MINIMAPPA =====
+
+@onready var minimap = $Minimap
+
 # ===== MAPPING RISORSE -> UI =====
 
 ## Mappa tipo risorsa a label UI corrispondente (riduce codice ripetitivo)
@@ -62,12 +66,26 @@ func _deferred_setup() -> void:
 	if unit_info_panel:
 		unit_info_panel.visible = false
 	_setup_ui_positions()
+	_setup_minimap()
 
 ## Posiziona i pannelli UI nelle posizioni corrette
 func _setup_ui_positions() -> void:
 	$ResourcePanel.position = RESOURCE_PANEL_POS
 	unit_info_panel.position = UNIT_INFO_PANEL_POS
 	unit_info_panel.size = UNIT_INFO_PANEL_SIZE
+
+## Configura la minimappa con la camera principale
+func _setup_minimap() -> void:
+	if not minimap:
+		return
+
+	# Trova la camera principale nella scena
+	var main_camera = get_tree().root.find_child("game_camera", true, false)
+	if main_camera:
+		minimap.set_main_camera(main_camera)
+		print("Minimappa collegata alla camera principale")
+	else:
+		push_warning("Camera principale non trovata per minimappa")
 
 ## Aggiorna tutti i display delle risorse
 func _update_all_resources() -> void:

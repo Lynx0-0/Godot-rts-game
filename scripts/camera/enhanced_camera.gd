@@ -26,7 +26,10 @@ var depth_material: ShaderMaterial
 func _ready():
 	enabled = true
 	zoom = Vector2(1.5, 1.5)
-	
+
+	# Aggiungi al gruppo per facilitare il ritrovamento
+	add_to_group("main_camera")
+
 	if enable_depth_effects:
 		_setup_post_processing()
 
