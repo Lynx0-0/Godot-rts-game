@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://bbktj3ub3ye7q"]
+[gd_scene load_steps=5 format=3 uid="uid://bbktj3ub3ye7q"]
 
 [ext_resource type="Script" uid="uid://cmin0y1wee6qa" path="res://scripts/ui/hud.gd" id="1_0mwgc"]
 [ext_resource type="Texture2D" uid="uid://brjsorqeq34yh" path="res://icon.svg" id="2_hqnrr"]
 [ext_resource type="PackedScene" uid="uid://c8k2vxm3n4qwe" path="res://scenes/ui/minimap.tscn" id="3_minimap"]
+[ext_resource type="PackedScene" uid="uid://dhv0kemuqg3lj" path="res://scenes/ui/build_menu.tscn" id="4_8qguk"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_0mwgc")
@@ -79,3 +80,5 @@ offset_right = -10.0
 offset_bottom = -10.0
 grow_horizontal = 0
 grow_vertical = 0
+
+[node name="BuildMenu" parent="." instance=ExtResource("4_8qguk")]

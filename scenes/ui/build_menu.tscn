@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3 uid="uid://dhv0kemuqg3lj"]
+
+[ext_resource type="Script" uid="uid://ioone8o1j6bb" path="res://scripts/ui/build_menu.gd" id="1_3xaa5"]
+
+[node name="BuildMenu" type="Panel"]
+offset_right = 1150.0
+offset_bottom = 95.0
+script = ExtResource("1_3xaa5")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 1139.0
+offset_bottom = 87.0
+
+[node name="Costruisci" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="TownCenterButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="BarracksButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="CancelButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2

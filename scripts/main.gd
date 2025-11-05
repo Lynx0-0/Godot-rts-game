@@ -43,6 +43,11 @@ var setup_completed := false
 # ===== METODI LIFECYCLE =====
 
 func _ready():
+	# In main.gd dopo _ready()
+func _input(event):
+	if event.is_action_pressed("ui_accept"):  # Spazio
+		var tc = load("res://scenes/buildings/town_center.tscn")
+		BuildingPlacement.start_placement(tc, Vector2i(3, 3))
 	# Previene setup duplicati
 	if setup_completed:
 		push_warning("Setup già completato, saltando reinizializzazione")
