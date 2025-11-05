@@ -5,4 +5,4 @@
 
 [node name="BaseBuilding" instance=ExtResource("1_1sx7f")]
 script = ExtResource("1_kb067")
-health = 500
+rally_point_offset = Vector2(100, 0)
