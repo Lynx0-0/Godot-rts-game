@@ -1,0 +1,30 @@
+[gd_scene load_steps=4 format=3 uid="uid://clhdmfn1x5kam"]
+
+[ext_resource type="Script" uid="uid://kqe73pgvvbhw" path="res://scripts/buildings/base_building.gd" id="1_6u2ey"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_exp6l"]
+size = Vector2(64, 64)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_fc50v"]
+radius = 80.0
+
+[node name="BaseBuilding" type="StaticBody2D"]
+script = ExtResource("1_6u2ey")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_exp6l")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_right = 4.0
+offset_bottom = 27.0
+
+[node name="DepositZone" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DepositZone"]
+shape = SubResource("CircleShape2D_fc50v")
+
+[node name="BuildingName" type="Label" parent="."]
+offset_right = 40.0
+offset_bottom = 23.0
