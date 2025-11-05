@@ -5,6 +5,9 @@ extends Panel
 @onready var barracks_btn = $VBoxContainer/BarracksButton
 @onready var cancel_btn = $VBoxContainer/CancelButton
 
+# Traccia edificio in piazzamento corrente
+var current_building_key: String = ""
+
 # Definizioni edifici
 const BUILDINGS = {
 	"town_center": {
@@ -63,28 +66,49 @@ func _on_barracks_pressed():
 
 func _start_building(building_key: String):
 	var building_data = BUILDINGS[building_key]
-	
+
 	# Controlla costi
 	if not ResourceManager.can_afford(building_data["cost"]):
-		print("Risorse insufficienti per %s!" % building_data["name"])
+		push_warning("Risorse insufficienti per %s!" % building_data["name"])
 		return
-	
-	# Avvia modalità piazzamento
+
+	# Carica scena con error handling
+	if not ResourceLoader.exists(building_data["scene"]):
+		push_error("Scena edificio non trovata: %s" % building_data["scene"])
+		return
+
 	var scene = load(building_data["scene"])
+	if scene == null:
+		push_error("Errore caricamento scena: %s" % building_data["scene"])
+		return
+
+	# Memorizza edificio corrente per deduzione costi dopo piazzamento
+	current_building_key = building_key
+
+	# Avvia modalità piazzamento
 	BuildingPlacement.start_placement(scene, building_data["size"])
-	
+
 	hide_menu()
 	print("Modalità piazzamento %s attivata" % building_data["name"])
 
 func _on_building_placed(building, grid_pos):
 	"""Quando edificio piazzato, dedurre costi"""
-	# Trova quale edificio era
-	for key in BUILDINGS:
-		var building_data = BUILDINGS[key]
-		if building is TownCenter and key == "town_center":
-			_deduct_costs(building_data["cost"])
-			break
-		# Aggiungi altri controlli per altri edifici
+	# Usa l'edificio che stavamo piazzando
+	if current_building_key.is_empty():
+		push_warning("Edificio piazzato ma nessun building_key memorizzato!")
+		return
+
+	if not BUILDINGS.has(current_building_key):
+		push_error("Building key invalido: %s" % current_building_key)
+		return
+
+	var building_data = BUILDINGS[current_building_key]
+	_deduct_costs(building_data["cost"])
+
+	print("✅ %s piazzato! Costi dedotti." % building_data["name"])
+
+	# Reset building key
+	current_building_key = ""
 
 func _deduct_costs(costs: Dictionary):
 	"""Sottrae costi risorse"""
@@ -93,6 +117,8 @@ func _deduct_costs(costs: Dictionary):
 
 func _on_placement_cancelled():
 	print("Piazzamento annullato")
+	# Reset building key quando annullato
+	current_building_key = ""
 
 func _on_cancel_pressed():
 	if BuildingPlacement.is_placing:

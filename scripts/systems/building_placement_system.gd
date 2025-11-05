@@ -70,7 +70,7 @@ func _input(event):
 		if placement_valid:
 			_place_building()
 		else:
-			print("Posizione non valida per piazzamento!")
+			_show_invalid_placement_feedback()
 
 	# Click destro o ESC: annulla
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
@@ -134,6 +134,36 @@ func _is_placement_valid(grid_pos: Vector2i) -> bool:
 
 	return true
 
+func _show_invalid_placement_feedback():
+	"""Mostra feedback quando tentativo piazzamento non valido"""
+	var mouse_pos = preview_building.get_global_mouse_position()
+	var grid_pos = world_to_grid(mouse_pos)
+
+	# Controlla perché non è valido
+	var reason = _get_invalid_reason(grid_pos)
+	push_warning("❌ Posizione non valida: %s" % reason)
+
+	# Effetto visivo: flash rosso del preview
+	if preview_building:
+		var tween = create_tween()
+		tween.tween_property(preview_building, "modulate", Color.RED, 0.1)
+		tween.tween_property(preview_building, "modulate", INVALID_COLOR, 0.1)
+
+func _get_invalid_reason(grid_pos: Vector2i) -> String:
+	"""Determina perché la posizione non è valida"""
+	for x in range(building_size.x):
+		for y in range(building_size.y):
+			var cell = Vector2i(grid_pos.x + x, grid_pos.y + y)
+
+			if occupied_cells.has(cell):
+				return "Spazio già occupato da altro edificio"
+
+			var world_pos = grid_to_world(cell)
+			if _has_collision_at(world_pos):
+				return "Collisione con oggetto esistente"
+
+	return "Posizione non valida"
+
 func _has_collision_at(world_pos: Vector2) -> bool:
 	"""Controlla se c'è collisione nella posizione"""
 	# Query physics space
@@ -149,16 +179,27 @@ func _has_collision_at(world_pos: Vector2) -> bool:
 func _place_building():
 	"""Piazza l'edificio nella posizione corrente"""
 	if not current_building_scene or not preview_building:
+		push_error("Tentativo di piazzare edificio senza scene o preview valido")
 		return
 
 	var grid_pos = world_to_grid(preview_building.global_position)
+
+	# Double-check validità prima di piazzare
+	if not _is_placement_valid(grid_pos):
+		push_warning("Validazione fallita al momento del piazzamento")
+		return
 
 	# Crea edificio reale
 	var building = current_building_scene.instantiate()
 	building.global_position = grid_to_world(grid_pos)
 
-	# Aggiungi alla scena
-	get_tree().root.add_child(building)
+	# Trova nodo Main per aggiungere edificio come child
+	var main_node = get_tree().root.get_node_or_null("Main")
+	if main_node:
+		main_node.add_child(building)
+	else:
+		# Fallback: aggiungi a root
+		get_tree().root.add_child(building)
 
 	# Marca celle come occupate
 	for x in range(building_size.x):
@@ -169,7 +210,7 @@ func _place_building():
 	# Emetti segnale
 	building_placed.emit(building, grid_pos)
 
-	print("Edificio piazzato a griglia %v (world: %v)" % [grid_pos, building.global_position])
+	print("✅ Edificio piazzato a griglia %v (world: %v)" % [grid_pos, building.global_position])
 
 	# Pulisci preview
 	cancel_placement()
